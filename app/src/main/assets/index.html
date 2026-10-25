@@ -27,6 +27,27 @@
     <small>Desenvolvido por <b>Thiers Lima</b></small>
   </div>
 
+  <div id="permissionIntro" class="permission-intro hidden" role="dialog" aria-modal="true" aria-labelledby="permissionIntroTitle">
+    <div class="permission-intro-card">
+      <div class="permission-brand">
+        <div class="brand-mark brand-mark-xl"><span class="calendar-top"></span><span class="check">✓</span></div>
+        <h1>Dívida em Dia</h1>
+        <p>Seus compromissos sempre no controle.</p>
+      </div>
+      <div class="permission-bell">🔔</div>
+      <h2 id="permissionIntroTitle">Permitir notificações?</h2>
+      <p class="permission-copy">O Dívida em Dia precisa da sua permissão para avisar sobre vencimentos e contas atrasadas.</p>
+      <div class="permission-benefits">
+        <span>✓ Lembretes de vencimento</span>
+        <span>✓ Avisos de contas atrasadas</span>
+        <span>✓ Notificações personalizadas</span>
+        <span>✓ Receba avisos antes do vencimento</span>
+      </div>
+      <button class="primary-btn permission-allow" id="firstPermissionAllow">Permitir notificações</button>
+      <button class="permission-later" id="firstPermissionLater">Agora não</button>
+    </div>
+  </div>
+
   <div class="app-shell">
     <header class="topbar" id="topbar">
       <button class="back-btn hidden" id="backBtn" aria-label="Voltar">‹</button>
@@ -137,30 +158,79 @@
       </section>
 
       <section class="view" data-view="reminders">
-        <div class="hero-info"><span class="hero-info-icon">🔔</span><div><h2>Receba lembretes das suas contas</h2><p>Escolha quando deseja ser avisado sobre os vencimentos.</p></div></div>
-        <div class="settings-list">
-          <div class="toggle-card"><span class="field-icon green">▣</span><div><b>7 dias antes</b><small>Avise uma semana antes</small></div><label class="switch"><input type="checkbox" data-reminder="7"><span></span></label></div>
-          <div class="toggle-card"><span class="field-icon orange">▣</span><div><b>3 dias antes</b><small>Avise três dias antes</small></div><label class="switch"><input type="checkbox" data-reminder="3"><span></span></label></div>
-          <div class="toggle-card"><span class="field-icon red">▣</span><div><b>1 dia antes</b><small>Avise um dia antes</small></div><label class="switch"><input type="checkbox" data-reminder="1"><span></span></label></div>
-          <div class="toggle-card"><span class="field-icon blue">▣</span><div><b>No dia do vencimento</b><small>Avise no próprio dia</small></div><label class="switch"><input type="checkbox" data-reminder="0"><span></span></label></div>
-          <div class="field-card sound-choice-card"><span class="field-icon purple">♫</span><label>Som padrão dos lembretes<select id="globalSoundSelect">
-            <option value="exclusive">Som Dívida em Dia — exclusivo</option>
-            <option value="soft">Som 1 — Alerta suave</option>
-            <option value="clear">Som 2 — Aviso claro</option>
-            <option value="double">Som 3 — Toque duplo</option>
-            <option value="system">Som padrão do celular</option>
-            <option value="silent">Sem som</option>
-          </select></label></div>
-          <div class="toggle-card"><span class="field-icon green">≈</span><div><b>Vibração</b><small>Vibrar junto com o lembrete</small></div><label class="switch"><input type="checkbox" id="vibrationToggle"><span></span></label></div>
+        <div class="reminder-intro">
+          <h2>Quando quer ser avisado?</h2>
+          <p>Escolha os lembretes e o som padrão do app.</p>
         </div>
-        <div class="sound-picker-grid">
-          <button class="secondary-btn" id="pickSystemSoundBtn">♫ Escolher som do celular</button>
-          <button class="secondary-btn" id="pickAudioSoundBtn">▤ Escolher arquivo de áudio</button>
+
+        <div class="settings-list reminder-times">
+          <div class="toggle-card compact"><span class="field-icon green">▣</span><div><b>7 dias antes</b><small>Avise uma semana antes</small></div><label class="switch"><input type="checkbox" data-reminder="7"><span></span></label></div>
+          <div class="toggle-card compact"><span class="field-icon orange">▣</span><div><b>3 dias antes</b><small>Avise três dias antes</small></div><label class="switch"><input type="checkbox" data-reminder="3"><span></span></label></div>
+          <div class="toggle-card compact"><span class="field-icon red">▣</span><div><b>1 dia antes</b><small>Avise um dia antes</small></div><label class="switch"><input type="checkbox" data-reminder="1"><span></span></label></div>
+          <div class="toggle-card compact"><span class="field-icon blue">▣</span><div><b>No dia do vencimento</b><small>Avise no próprio dia</small></div><label class="switch"><input type="checkbox" data-reminder="0"><span></span></label></div>
         </div>
-        <div class="picked-sound hidden" id="globalPickedSound"></div>
-        <div class="sound-test-grid"><button class="secondary-btn" id="previewSoundBtn">▶ Ouvir som selecionado</button><button class="primary-btn" id="testNotificationBtn">🔔 Testar notificação agora</button></div>
-        <button class="primary-btn" id="enableNotificationsBtn">Ativar notificações do celular</button>
-        <div class="notification-preview"><small>Prévia do lembrete</small><div><div class="brand-mark mini"><span class="calendar-top"></span><span class="check">✓</span></div><div><b>Dívida em Dia</b><strong>Conta vencendo amanhã</strong><span>Energia • R$ 150,00 • Vence em 30/10</span></div></div></div>
+
+        <div class="sound-settings-card">
+          <h3>Som selecionado</h3>
+          <button class="sound-row selected" type="button" data-global-sound="exclusive">
+            <span class="sound-icon exclusive">✓</span>
+            <span class="sound-copy"><b>Som Dívida em Dia — exclusivo</b><small>Som padrão do aplicativo (recomendado)</small></span>
+            <span class="play-sound" data-preview-mode="exclusive" aria-label="Ouvir som">▶</span><i class="sound-radio"></i>
+          </button>
+
+          <p class="sound-group-title">Outros sons do aplicativo</p>
+          <button class="sound-row" type="button" data-global-sound="soft">
+            <span class="sound-icon soft">🔔</span><span class="sound-copy"><b>Som 1 — Alerta suave</b><small>Curto e discreto</small></span>
+            <span class="play-sound" data-preview-mode="soft">▶</span><i class="sound-radio"></i>
+          </button>
+          <button class="sound-row" type="button" data-global-sound="clear">
+            <span class="sound-icon clear">🔔</span><span class="sound-copy"><b>Som 2 — Aviso claro</b><small>Mais evidente</small></span>
+            <span class="play-sound" data-preview-mode="clear">▶</span><i class="sound-radio"></i>
+          </button>
+          <button class="sound-row" type="button" data-global-sound="double">
+            <span class="sound-icon double">🔔</span><span class="sound-copy"><b>Som 3 — Toque duplo</b><small>Estilo aplicativo financeiro</small></span>
+            <span class="play-sound" data-preview-mode="double">▶</span><i class="sound-radio"></i>
+          </button>
+
+          <p class="sound-group-title">Sons do celular</p>
+          <button class="sound-row" type="button" data-global-sound="system">
+            <span class="sound-icon phone">♫</span><span class="sound-copy"><b>Usar som padrão do celular</b><small>Toque padrão de notificações do Android</small></span>
+            <span></span><i class="sound-radio"></i>
+          </button>
+          <button class="sound-row action" type="button" id="pickSystemSoundBtn">
+            <span class="sound-icon phone2">♫</span><span class="sound-copy"><b>Escolher som do celular</b><small>Selecione um toque disponível no aparelho</small></span>
+            <span class="row-chevron">›</span>
+          </button>
+
+          <p class="sound-group-title">Arquivo de áudio</p>
+          <button class="sound-row action" type="button" id="pickAudioSoundBtn">
+            <span class="sound-icon file">▰</span><span class="sound-copy"><b>Escolher arquivo de áudio</b><small>MP3, M4A, WAV ou outro</small></span>
+            <span class="row-chevron">›</span>
+          </button>
+          <div class="picked-sound hidden" id="globalPickedSound"></div>
+
+          <p class="sound-group-title">Sem som</p>
+          <button class="sound-row" type="button" data-global-sound="silent">
+            <span class="sound-icon silent">🔇</span><span class="sound-copy"><b>Sem som</b><small>Apenas vibração (se estiver ativada)</small></span>
+            <span></span><i class="sound-radio"></i>
+          </button>
+        </div>
+
+        <div class="reminder-bottom-card">
+          <div class="toggle-card compact no-border"><span class="field-icon green">≈</span><div><b>Vibração</b><small>Vibrar junto com o lembrete</small></div><label class="switch"><input type="checkbox" id="vibrationToggle"><span></span></label></div>
+          <button class="notification-status-row" id="notificationStatusRow" type="button">
+            <span class="field-icon green">🔔</span><div><b>Notificações Android</b><small id="notificationStatusText">Verificando permissão…</small></div><span class="status-badge" id="notificationStatusBadge">•••</span>
+          </button>
+          <button class="test-notification-compact" id="testNotificationBtn" type="button">🔔 <span><b>Testar notificação</b><small>Envia um lembrete de teste agora.</small></span></button>
+        </div>
+
+        <details class="notification-preview-collapsed" id="notificationPreviewDetails">
+          <summary><span class="preview-eye">◉</span><span><b>Como será o aviso?</b><small>Veja um exemplo de como a notificação vai aparecer.</small></span><span class="preview-chevron">⌄</span></summary>
+          <div class="notification-preview-body">
+            <div class="brand-mark mini"><span class="calendar-top"></span><span class="check">✓</span></div>
+            <div><b>Dívida em Dia • agora</b><strong>Conta vencendo amanhã</strong><span>Energia • R$ 150,00 • Vence em 30/10</span></div>
+          </div>
+        </details>
       </section>
 
       <section class="view" data-view="settings">
@@ -173,9 +243,9 @@
           <button class="settings-row" data-go="backup"><span class="field-icon green">↥</span><div><b>Backup e restauração</b><small>Salvar ou restaurar seus dados</small></div><span>›</span></button>
           <button class="settings-row" id="securityBtn"><span class="field-icon red">◆</span><div><b>Segurança</b><small>Dados salvos somente no aparelho</small></div><span>›</span></button>
           <button class="settings-row" id="helpBtn"><span class="field-icon blue">?</span><div><b>Ajuda</b><small>Dúvidas frequentes</small></div><span>›</span></button>
-          <button class="settings-row" data-go="about"><span class="field-icon gray">i</span><div><b>Sobre o app</b><small>Versão 1.3</small></div><span>›</span></button>
+          <button class="settings-row" data-go="about"><span class="field-icon gray">i</span><div><b>Sobre o app</b><small>Versão 1.4</small></div><span>›</span></button>
         </div>
-        <div class="settings-credit">Dívida em Dia • Versão 1.3<br><b>Desenvolvido por Thiers Lima</b></div>
+        <div class="settings-credit">Dívida em Dia • Versão 1.4<br><b>Desenvolvido por Thiers Lima</b></div>
       </section>
 
       <section class="view" data-view="backup">
@@ -197,7 +267,7 @@
         <div class="about-card">
           <div class="brand-mark brand-mark-xl"><span class="calendar-top"></span><span class="check">✓</span></div>
           <h1>Dívida em Dia</h1><p>Suas contas organizadas.<br>Seus vencimentos sob controle.</p>
-          <span class="version-pill">Versão 1.3</span>
+          <span class="version-pill">Versão 1.4</span>
           <p class="about-copy">Aplicativo para controle de dívidas, parcelas, vencimentos, pagamentos e lembretes.</p>
           <div class="author-card"><small>DESENVOLVIDO POR</small><strong>Thiers Lima</strong></div>
           <small>© 2026 • Todos os direitos reservados.</small>

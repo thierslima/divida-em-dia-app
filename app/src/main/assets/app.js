@@ -32,8 +32,8 @@ function setPickedSoundBox(id,mode,uri,name){const el=$(id);if(!el)return;if(mod
 
 function defaultData(){
   return {
-    version:4,
-    settings:{userName:'',darkMode:false,sound:true,soundMode:'exclusive',soundUri:'',soundName:'Som Dívida em Dia',vibration:true,reminders:[7,3,1,0]},
+    version:5,
+    settings:{userName:'',darkMode:false,sound:true,soundMode:'exclusive',soundUri:'',soundName:'Som Dívida em Dia',vibration:true,reminders:[7,3,1,0],notificationIntroSeen:false},
     categories:['Cartão de Crédito','Contas de Casa','Internet','Água','Energia','Telefone','Supermercado','Saúde','Educação','Transporte','Empréstimo','Financiamento','Assinaturas','Outros'],
     debts:[]
   };
@@ -61,7 +61,7 @@ function normalize(raw){
     if(String(settings.userName||'').trim().toLowerCase()==='josé') settings.userName='';
   }
   return {
-    version:4,
+    version:5,
     settings,
     categories:Array.isArray(raw.categories)&&raw.categories.length?raw.categories:fallback.categories,
     debts
@@ -183,12 +183,28 @@ function renderDetail(){
  </div>`;
 }
 
+function notificationPermissionGranted(){
+ if(nativeAvailable()&&typeof window.AndroidBridge.notificationsEnabled==='function'){
+  try{return !!window.AndroidBridge.notificationsEnabled();}catch(e){}
+ }
+ if('Notification' in window)return Notification.permission==='granted';
+ return false;
+}
+function renderNotificationStatus(){
+ const enabled=notificationPermissionGranted();
+ const badge=$('#notificationStatusBadge'),text=$('#notificationStatusText'),row=$('#notificationStatusRow');
+ if(!badge||!text||!row)return;
+ badge.textContent=enabled?'● Ativadas':'Ativar';
+ badge.classList.toggle('off',!enabled);
+ text.textContent=enabled?'O app pode enviar lembretes normalmente.':'Toque aqui para permitir lembretes.';
+ row.classList.toggle('needs-permission',!enabled);
+}
 function renderReminders(){
  $$('[data-reminder]').forEach(cb=>cb.checked=data.settings.reminders.includes(Number(cb.dataset.reminder)));
- const sel=$('#globalSoundSelect');if(sel){if(data.settings.soundMode==='uri'&&!sel.querySelector('option[value="uri"]')){const o=document.createElement('option');o.value='uri';o.textContent=`Personalizado — ${data.settings.soundName||'Áudio escolhido'}`;sel.appendChild(o)}sel.value=data.settings.soundMode||'exclusive';}
- $('#vibrationToggle').checked=data.settings.vibration!==false;setPickedSoundBox('#globalPickedSound',data.settings.soundMode,data.settings.soundUri,data.settings.soundName);
- if(window.AndroidBridge) $('#enableNotificationsBtn').textContent='Notificações Android ativadas';
- else if('Notification' in window && Notification.permission==='granted') $('#enableNotificationsBtn').textContent='Notificações ativadas';
+ $('#vibrationToggle').checked=data.settings.vibration!==false;
+ setPickedSoundBox('#globalPickedSound',data.settings.soundMode,data.settings.soundUri,data.settings.soundName);
+ $$('[data-global-sound]').forEach(row=>row.classList.toggle('selected',row.dataset.globalSound===(data.settings.soundMode||'exclusive')));
+ renderNotificationStatus();
 }
 function renderSettings(){
  const name=String(data.settings.userName||'').trim();
@@ -200,7 +216,7 @@ function renderAll(){renderHome();renderDebts();renderHistory();renderCalendar()
 
 const meta={
  home:null,debts:['Minhas dívidas','Todas as contas em um só lugar'],new:['Nova dívida','Cadastre uma conta ou parcela'],detail:['Detalhes da dívida','Informações e pagamentos'],calendar:null,history:null,
- reminders:['Lembretes','Nunca mais perca um vencimento'],settings:null,backup:['Backup e restauração','Proteja seus dados'],categories:['Categorias','Organize suas contas'],about:['Sobre o app','Dívida em Dia • Versão 1.3']
+ reminders:['Lembretes','Nunca mais perca um vencimento'],settings:null,backup:['Backup e restauração','Proteja seus dados'],categories:['Categorias','Organize suas contas'],about:['Sobre o app','Dívida em Dia • Versão 1.4']
 };
 function go(view,push=true){
  if(!document.querySelector(`[data-view="${view}"]`))return;if(push&&currentView!==view)previousViews.push(currentView);currentView=view;
@@ -248,16 +264,46 @@ window.onAndroidSoundPicked=(kind,uri,name)=>{
  else if(target.type==='debt'){const d=data.debts.find(x=>x.id===target.id);if(d){d.soundMode='uri';d.soundUri=uri;d.soundName=name||'Som personalizado';save();renderDetail();}$('#dialogBackdrop').classList.add('hidden');}
  pendingSoundTarget=null;toast(`Som selecionado: ${name||'personalizado'}`);
 };
-function previewSelectedSound(){if(!nativeAvailable()){toast('Use o APK Android para ouvir o som.');return;}try{window.AndroidBridge.previewSound(data.settings.soundMode||'exclusive',data.settings.soundUri||'');}catch(e){toast('Não foi possível reproduzir o som.');}}
-function testSelectedNotification(){if(!nativeAvailable()){toast('Use o APK Android para testar a notificação.');return;}try{window.AndroidBridge.testNotification(data.settings.soundMode||'exclusive',data.settings.soundUri||'',data.settings.vibration!==false);toast('Notificação de teste enviada.');}catch(e){toast('Não foi possível testar a notificação.');}}
+function previewSoundMode(mode,uri=''){
+ if(!nativeAvailable()){toast('Use o APK Android para ouvir o som.');return;}
+ try{window.AndroidBridge.previewSound(mode||'exclusive',uri||'');}catch(e){toast('Não foi possível reproduzir o som.');}
+}
+function previewSelectedSound(){previewSoundMode(data.settings.soundMode||'exclusive',data.settings.soundUri||'');}
+function testSelectedNotification(){
+ if(!nativeAvailable()){toast('Use o APK Android para testar a notificação.');return;}
+ try{window.AndroidBridge.testNotification(data.settings.soundMode||'exclusive',data.settings.soundUri||'',data.settings.vibration!==false);}
+ catch(e){toast('Não foi possível testar a notificação.');}
+}
 function nativeAvailable(){return typeof window.AndroidBridge!=='undefined'}
+function setGlobalSoundMode(mode){
+ data.settings.soundMode=mode;data.settings.sound=mode!=='silent';
+ if(mode!=='uri'){data.settings.soundUri='';data.settings.soundName=soundLabel(mode);}
+ save();renderReminders();toast('Som padrão atualizado.');
+}
+function hideFirstPermissionIntro(){
+ const el=$('#permissionIntro');if(el)el.classList.add('hidden');
+}
+function showFirstPermissionIntroIfNeeded(){
+ if(notificationPermissionGranted()){
+  if(!data.settings.notificationIntroSeen){data.settings.notificationIntroSeen=true;save(false);}
+  return;
+ }
+ if(data.settings.notificationIntroSeen)return;
+ const el=$('#permissionIntro');if(el)el.classList.remove('hidden');
+}
+window.onNotificationPermissionChanged=(enabled)=>{
+ renderNotificationStatus();
+ toast(enabled?'Notificações ativadas.':'Notificações continuam desativadas. Você pode ativar depois em Ajustes.');
+};
 function syncNativeReminders(){
  if(!nativeAvailable())return;try{window.AndroidBridge.syncReminders(JSON.stringify({settings:data.settings,debts:data.debts.filter(d=>d.status!=='paid')}));}catch(e){console.warn('Native reminder sync failed',e)}
 }
 async function enableNotifications(){
- if(nativeAvailable()){try{window.AndroidBridge.requestNotificationPermission();syncNativeReminders();toast('Lembretes do Android configurados.');return;}catch(e){}}
+ if(nativeAvailable()){
+  try{window.AndroidBridge.requestNotificationPermission();syncNativeReminders();setTimeout(renderNotificationStatus,500);return;}catch(e){}
+ }
  if(!('Notification'in window)){toast('Notificações não são suportadas neste navegador.');return;}
- const p=await Notification.requestPermission();toast(p==='granted'?'Notificações ativadas.':'Permissão de notificação não concedida.');if(p==='granted')checkWebReminders(true);
+ const p=await Notification.requestPermission();renderNotificationStatus();toast(p==='granted'?'Notificações ativadas.':'Permissão não concedida. Você pode ativar depois em Ajustes.');if(p==='granted')checkWebReminders(true);
 }
 function checkWebReminders(force=false){
  if(nativeAvailable()||!('Notification'in window)||Notification.permission!=='granted')return;const today=todayISO();
@@ -316,24 +362,28 @@ $('#debtForm').addEventListener('submit',e=>{
  save();renderAll();toast(installments>1?`${installments} parcelas cadastradas.`:'Dívida cadastrada.');previousViews=[];go('home',false);resetForm();
 });
 $$('[data-reminder]').forEach(cb=>cb.addEventListener('change',()=>{const n=Number(cb.dataset.reminder);data.settings.reminders=cb.checked?[...new Set([...data.settings.reminders,n])]:data.settings.reminders.filter(x=>x!==n);data.settings.reminders.sort((a,b)=>b-a);save();renderReminders();toast('Lembretes atualizados.')}));
-$('#globalSoundSelect').addEventListener('change',e=>{data.settings.soundMode=e.target.value;data.settings.sound=e.target.value!=='silent';if(e.target.value!=='uri'){data.settings.soundUri='';data.settings.soundName=soundLabel(e.target.value);const stale=e.target.querySelector('option[value="uri"]');if(stale)stale.remove();}save();renderReminders();toast('Som padrão atualizado.');});
+$$('[data-global-sound]').forEach(row=>row.addEventListener('click',e=>{if(e.target.closest('[data-preview-mode]'))return;setGlobalSoundMode(row.dataset.globalSound);}));
+$$('[data-preview-mode]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();previewSoundMode(btn.dataset.previewMode,'');}));
 $('#vibrationToggle').addEventListener('change',e=>{data.settings.vibration=e.target.checked;save();toast(e.target.checked?'Vibração ativada.':'Vibração desativada.');});
 $('#pickSystemSoundBtn').addEventListener('click',()=>pickNativeSound('system',{type:'global'}));$('#pickAudioSoundBtn').addEventListener('click',()=>pickNativeSound('file',{type:'global'}));
-$('#previewSoundBtn').addEventListener('click',previewSelectedSound);$('#testNotificationBtn').addEventListener('click',testSelectedNotification);
+$('#testNotificationBtn').addEventListener('click',testSelectedNotification);
+$('#notificationStatusRow').addEventListener('click',()=>{if(notificationPermissionGranted())toast('As notificações já estão ativadas.');else enableNotifications();});
 $('#newDebtPickSystem').addEventListener('click',()=>pickNativeSound('system',{type:'new'}));$('#newDebtPickFile').addEventListener('click',()=>pickNativeSound('file',{type:'new'}));
 $('#debtSoundSelect').addEventListener('change',e=>{if(e.target.value!=='uri')setPickedSoundBox('#newDebtPickedSound',e.target.value,'','');else if(newDebtSound.uri)setPickedSoundBox('#newDebtPickedSound','uri',newDebtSound.uri,newDebtSound.name);});
 $('#darkModeToggle').addEventListener('change',e=>{data.settings.darkMode=e.target.checked;save(false);renderSettings();toast(e.target.checked?'Modo escuro ativado.':'Modo claro ativado.');});
-$('#enableNotificationsBtn').addEventListener('click',enableNotifications);
 $('#backupBtn').addEventListener('click',exportBackup);$('#csvBtn').addEventListener('click',exportCsv);$('#printBtn').addEventListener('click',printReport);
 $('#restoreInput').addEventListener('change',e=>{const file=e.target.files?.[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{const parsed=JSON.parse(r.result);data=normalize(parsed);save();renderAll();toast('Backup restaurado com sucesso.');}catch(err){toast('Arquivo de backup inválido.');}finally{e.target.value=''}};r.readAsText(file);});
 $('#categoryForm').addEventListener('submit',e=>{e.preventDefault();const input=e.target.elements.category,name=input.value.trim();if(!name)return;if(data.categories.some(c=>c.toLowerCase()===name.toLowerCase())){toast('Essa categoria já existe.');return;}data.categories.push(name);input.value='';save();renderCategories();toast('Categoria adicionada.');});
 $('#editProfileBtn').addEventListener('click',async()=>{const v=await dialog('Seu nome','Digite seu nome para personalizar a tela inicial.',{inputValue:data.settings.userName||'',confirm:'Salvar'});if(v===null)return;const name=v.trim();if(name){data.settings.userName=name;save(false);renderAll();toast('Nome atualizado.');}});
 $('#securityBtn').addEventListener('click',()=>dialog('Segurança','O Dívida em Dia funciona offline e mantém seus dados localmente neste aparelho. Nenhuma dívida é enviada para servidores.',{cancel:'Fechar',confirm:'Entendi'}));
 $('#helpBtn').addEventListener('click',()=>dialog('Ajuda','Cadastre uma dívida, escolha o vencimento e ative os lembretes. Quando pagar, toque na dívida e marque como paga. Contas recorrentes criam o próximo mês automaticamente.',{cancel:'Fechar',confirm:'Entendi'}));
+$('#firstPermissionAllow').addEventListener('click',()=>{data.settings.notificationIntroSeen=true;save(false);hideFirstPermissionIntro();enableNotifications();});
+$('#firstPermissionLater').addEventListener('click',()=>{data.settings.notificationIntroSeen=true;save(false);hideFirstPermissionIntro();toast('Você pode ativar as notificações depois em Ajustes.');});
 
 function startup(){
  renderCategorySelect();resetForm();renderAll();go('home',false);document.body.classList.toggle('dark',!!data.settings.darkMode);
- setTimeout(()=>$('#splash').classList.add('hide'),1050);syncNativeReminders();setTimeout(()=>checkWebReminders(false),1600);
+ setTimeout(()=>{$('#splash').classList.add('hide');setTimeout(showFirstPermissionIntroIfNeeded,260);},1050);
+ syncNativeReminders();setTimeout(()=>checkWebReminders(false),1600);
  if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 window.appBack=()=>{if(currentView==='home'&&previousViews.length===0)return false;back();return true;};

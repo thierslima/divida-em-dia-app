@@ -2,6 +2,7 @@ package com.thierslima.dividaemdia;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -129,6 +130,37 @@ public class MainActivity extends Activity {
         }
     }
 
+    private boolean areNotificationsEnabled() {
+        if (Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            return manager == null || manager.areNotificationsEnabled();
+        }
+        return true;
+    }
+
+    private void sendNotificationPermissionToJs(boolean enabled) {
+        if (webView == null) return;
+        final String js = "window.onNotificationPermissionChanged && window.onNotificationPermissionChanged(" + (enabled ? "true" : "false") + ")";
+        webView.post(() -> webView.evaluateJavascript(js, null));
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST) {
+            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            sendNotificationPermissionToJs(granted);
+            if (granted) {
+                String json = getSharedPreferences("divida_em_dia", MODE_PRIVATE).getString("reminders_json", null);
+                if (json != null) ReminderScheduler.scheduleAll(this, json);
+            }
+        }
+    }
+
     private void sendSoundToJs(String kind, Uri uri, String name) {
         if (webView == null || uri == null) return;
         final String js = "window.onAndroidSoundPicked && window.onAndroidSoundPicked(" +
@@ -174,12 +206,17 @@ public class MainActivity extends Activity {
 
     private class AppBridge {
         @JavascriptInterface
+        public boolean notificationsEnabled() {
+            return areNotificationsEnabled();
+        }
+
+        @JavascriptInterface
         public void requestNotificationPermission() {
             runOnUiThread(() -> {
                 if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST);
                 } else {
-                    Toast.makeText(MainActivity.this, "Notificações ativadas.", Toast.LENGTH_SHORT).show();
+                    sendNotificationPermissionToJs(true);
                 }
             });
         }

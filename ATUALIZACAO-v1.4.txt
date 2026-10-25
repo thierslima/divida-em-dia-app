@@ -1,0 +1,17 @@
+DÍVIDA EM DIA — ATUALIZAÇÃO v1.4
+Desenvolvido por Thiers Lima
+
+Novidades:
+- Pedido de permissão de notificações na primeira abertura, mostrado apenas uma vez.
+- Opção “Agora não”; o app não insiste e permite ativar depois em Ajustes.
+- Tela de sons redesenhada e mais compacta.
+- Prévia recolhida em “Como será o aviso?”.
+- Status real da permissão de notificações do Android.
+- Botão compacto para testar notificação.
+- Mantidos sons do app, som do celular, arquivo de áudio e som por dívida.
+
+Para atualizar pelo GitHub:
+1. Extraia o ZIP.
+2. Envie o conteúdo para a raiz do repositório.
+3. Se a pasta .github não for enviada pelo navegador, o workflow atual do repositório ainda compila o app; para atualizar o nome do artifact, copie WORKFLOW-GITHUB-v1.4.yml para .github/workflows/build-apk.yml.
+4. Rode Actions > Gerar APK - Divida em Dia.
