@@ -1,0 +1,15 @@
+A raiz do repositório precisa ficar assim:
+
+.github/
+  workflows/
+    build-apk.yml
+app/
+  build.gradle
+  src/
+build.gradle
+gradle.properties
+settings.gradle
+README.md
+LEIA-PRIMEIRO-GITHUB.txt
+
+Se o GitHub mostrar essa estrutura, o Actions reconhecerá o workflow.

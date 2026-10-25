@@ -1,0 +1,43 @@
+DÍVIDA EM DIA — APP ANDROID 1.0
+Desenvolvido por Thiers Lima
+
+O QUE JÁ ESTÁ PRONTO
+- Tela de abertura com crédito "Desenvolvido por Thiers Lima"
+- Dashboard moderno
+- Cadastro de dívidas
+- Parcelamento automático
+- Contas recorrentes mensais
+- Status Pendente / Vence hoje / Atrasado / Pago
+- Calendário de vencimentos
+- Histórico de pagamentos
+- Lembretes 7, 3, 1 dia antes e no vencimento
+- Notificações nativas Android por AlarmManager
+- Restauração dos alarmes após reiniciar o celular
+- Modo escuro
+- Categorias
+- Backup e restauração JSON
+- Exportação CSV compatível com Excel
+- Relatório para impressão/PDF
+- Funcionamento offline
+- Dados salvos no aparelho
+- Tela "Sobre o app" com autoria de Thiers Lima
+
+PACOTE ANDROID
+Package ID: com.thierslima.dividaemdia
+Versão: 1.0
+Min Android: 6.0 (API 23)
+Target/Compile SDK: 35
+
+COMO GERAR O APK NO WINDOWS
+1. Instale o Android Studio pelo site oficial:
+   https://developer.android.com/studio
+2. Abra o Android Studio pelo menos uma vez e deixe instalar o Android SDK.
+3. No SDK Manager, confirme que "Android SDK Platform 35" está instalado.
+4. Feche o Android Studio.
+5. Dê dois cliques em GERAR_APK.bat.
+6. Na primeira execução o script baixa o Gradle 8.9.
+7. Ao terminar, aparecerá o arquivo:
+   DividaEmDia-v1.0.apk
+
+OBSERVAÇÃO
+O APK não foi compilado dentro do ambiente do ChatGPT porque este ambiente não possui o Android SDK/Build Tools instalados. O projeto Android e o código dos lembretes nativos estão completos e preparados para compilação.

@@ -1,0 +1,17 @@
+{
+  "name": "Dívida em Dia",
+  "short_name": "Dívida em Dia",
+  "description": "Suas contas organizadas. Seus vencimentos sob controle.",
+  "id": "/divida-em-dia/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#063b4d",
+  "theme_color": "#063b4d",
+  "categories": ["finance", "productivity", "utilities"],
+  "icons": [
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}

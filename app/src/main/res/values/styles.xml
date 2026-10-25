@@ -1,0 +1,10 @@
+<resources>
+    <style name="Theme.DividaEmDia" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorAccent">#08A86B</item>
+        <item name="android:statusBarColor">#063B4D</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

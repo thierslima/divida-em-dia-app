@@ -1,0 +1,24 @@
+DÍVIDA EM DIA — PACOTE GITHUB DEFINITIVO
+Desenvolvido por Thiers Lima
+
+ESTE PACOTE JÁ ESTÁ PRONTO PARA O GITHUB.
+
+IMPORTANTE:
+1. Extraia este ZIP no computador.
+2. Entre na pasta extraída.
+3. Envie TODO o conteúdo para a RAIZ do repositório GitHub.
+4. Na raiz do repositório devem aparecer diretamente:
+   - app/
+   - .github/
+   - build.gradle
+   - settings.gradle
+   - gradle.properties
+   - README.md
+5. A pasta .github/workflows contém build-apk.yml.
+6. Depois do upload, abra a aba Actions.
+7. O workflow deve aparecer como: Gerar APK - Divida em Dia.
+8. O workflow também executa automaticamente após o commit na branch main/master.
+9. Ao concluir, abra a execução e baixe o Artifact: DividaEmDia-v1.0-APK.
+
+NÃO envie apenas a pasta app.
+NÃO envie o ZIP fechado como se fosse o projeto.

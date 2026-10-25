@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#063b4d" />
+  <meta name="description" content="Dívida em Dia — suas contas organizadas e seus vencimentos sob controle." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Dívida em Dia</title>
+</head>
+<body>
+  <div id="splash" class="splash" aria-hidden="false">
+    <div class="splash-glow splash-glow-a"></div>
+    <div class="splash-glow splash-glow-b"></div>
+    <div class="brand-mark brand-mark-xl" aria-hidden="true">
+      <span class="calendar-top"></span><span class="check">✓</span>
+    </div>
+    <h1>Dívida em Dia</h1>
+    <p>Suas contas organizadas.<br>Seus vencimentos sob controle.</p>
+    <div class="splash-loader"><span></span></div>
+    <small>Desenvolvido por <b>Thiers Lima</b></small>
+  </div>
+
+  <div class="app-shell">
+    <header class="topbar" id="topbar">
+      <button class="back-btn hidden" id="backBtn" aria-label="Voltar">‹</button>
+      <div class="brand-header" id="brandHeader">
+        <div class="brand-mark"><span class="calendar-top"></span><span class="check">✓</span></div>
+        <div><b>Dívida em Dia</b><small>Suas contas, no controle</small></div>
+      </div>
+      <div class="page-heading hidden" id="pageHeading"><b id="pageTitle"></b><small id="pageSubtitle"></small></div>
+      <button class="notification-btn" id="notificationBtn" aria-label="Lembretes"><span>🔔</span><i id="notificationDot"></i></button>
+    </header>
+
+    <main>
+      <section class="view active" data-view="home">
+        <div class="welcome-row"><div><h1>Olá, <span id="userName">José</span>! 👋</h1><p id="monthLabel"></p></div></div>
+        <div class="summary-card">
+          <div><span>Total pendente</span><strong id="totalPending">R$ 0,00</strong><small id="pendingCount">0 contas</small></div>
+          <div class="mini-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="stats-grid">
+          <button class="stat-card danger" data-filter-shortcut="late"><span class="stat-icon">!</span><div><small>Atrasadas</small><strong id="lateTotal">R$ 0,00</strong><em id="lateCount">0 contas</em></div></button>
+          <button class="stat-card warning" data-filter-shortcut="week"><span class="stat-icon">◷</span><div><small>Próximos 7 dias</small><strong id="weekTotal">R$ 0,00</strong><em id="weekCount">0 contas</em></div></button>
+          <button class="stat-card success" data-filter-shortcut="paid"><span class="stat-icon">✓</span><div><small>Pagas no mês</small><strong id="paidMonth">R$ 0,00</strong><em id="paidCount">0 contas</em></div></button>
+          <button class="stat-card info" data-filter-shortcut="today"><span class="stat-icon">▣</span><div><small>Vence hoje</small><strong id="todayTotal">R$ 0,00</strong><em id="todayCount">0 contas</em></div></button>
+        </div>
+        <div class="section-head"><h2>Próximos vencimentos</h2><button class="text-btn" data-go="debts">Ver todos ›</button></div>
+        <div id="upcomingList" class="cards-list"></div>
+      </section>
+
+      <section class="view" data-view="debts">
+        <div class="filter-row">
+          <button class="chip active" data-debt-filter="all">Todas</button>
+          <button class="chip" data-debt-filter="pending">Pendentes</button>
+          <button class="chip" data-debt-filter="late">Atrasadas</button>
+          <button class="chip" data-debt-filter="paid">Pagas</button>
+        </div>
+        <div id="debtList" class="cards-list"></div>
+      </section>
+
+      <section class="view" data-view="new">
+        <form id="debtForm" class="form-stack">
+          <div class="field-card"><span class="field-icon blue">▤</span><label>Nome da dívida<input required name="name" placeholder="Ex.: Cartão Nubank" autocomplete="off" /></label></div>
+          <div class="field-card"><span class="field-icon blue">●</span><label>Valor da parcela (R$)<input required name="amount" inputmode="decimal" placeholder="0,00" autocomplete="off" /></label></div>
+          <div class="field-card"><span class="field-icon orange">▣</span><label>Data de vencimento<input required name="due" type="date" /></label></div>
+          <div class="field-card"><span class="field-icon purple">◇</span><label>Categoria<select name="category" id="categorySelect"></select></label></div>
+          <div class="toggle-card"><span class="field-icon green">↻</span><div><b>Conta recorrente</b><small>Essa dívida se repete todo mês</small></div><label class="switch"><input type="checkbox" name="recurring"><span></span></label></div>
+          <div class="toggle-card"><span class="field-icon purple">▦</span><div><b>É parcelada?</b><small>Crie automaticamente várias parcelas</small></div><label class="switch"><input type="checkbox" id="installmentsToggle"><span></span></label></div>
+          <div class="field-card hidden" id="installmentsField"><span class="field-icon blue">☷</span><label>Quantidade de parcelas<input name="installments" type="number" min="2" max="120" value="2" /></label></div>
+          <div class="field-card"><span class="field-icon gray">▧</span><label>Observações (opcional)<textarea name="note" rows="2" placeholder="Ex.: Compra de celular, parcela..." ></textarea></label></div>
+          <div class="preview-card" id="newDebtPreview"><small>Pré-visualização</small><div><span class="category-avatar">💳</span><div><b>Nova dívida</b><em>Selecione os dados acima</em></div><strong>R$ 0,00</strong></div></div>
+          <button class="primary-btn" type="submit">Salvar dívida</button>
+        </form>
+      </section>
+
+      <section class="view" data-view="detail">
+        <div id="detailContent"></div>
+      </section>
+
+      <section class="view" data-view="calendar">
+        <div class="calendar-title"><div><h1>Calendário</h1><p>Veja seus vencimentos por dia</p></div><button class="soft-btn" id="todayBtn">Hoje</button></div>
+        <div class="calendar-card">
+          <div class="calendar-head"><button id="prevMonth">‹</button><h2 id="calendarLabel"></h2><button id="nextMonth">›</button></div>
+          <div class="weekdays"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+        <div class="legend"><span><i class="dot paid"></i>Pago</span><span><i class="dot today"></i>Vence hoje</span><span><i class="dot pending"></i>Próximo</span><span><i class="dot late"></i>Atrasado</span></div>
+        <div class="section-head"><div><h2>Vencimentos do dia</h2><p id="selectedDateLabel"></p></div><small id="selectedDateCount"></small></div>
+        <div id="calendarDayList" class="cards-list"></div>
+      </section>
+
+      <section class="view" data-view="history">
+        <div class="history-title"><h1>Histórico</h1><p>Acompanhe todos os seus pagamentos</p></div>
+        <div class="filter-row">
+          <button class="chip active" data-history-filter="paid">Pagas</button>
+          <button class="chip" data-history-filter="pending">Pendentes</button>
+          <button class="chip" data-history-filter="late">Atrasadas</button>
+          <button class="chip" data-history-filter="all">Todos</button>
+        </div>
+        <div class="history-summary-grid">
+          <div class="metric-card blue"><small>Total pago no mês</small><strong id="historyMonthTotal">R$ 0,00</strong><em id="historyMonthCount">0 pagamentos</em></div>
+          <div class="metric-card green"><small>Contas quitadas</small><strong id="historyPaidRatio">0 de 0</strong><em id="historyPaidPercent">0% do mês</em></div>
+        </div>
+        <div class="section-head"><h2>Movimentações</h2><button class="text-btn" id="historySortBtn">Mais recente ↓</button></div>
+        <div id="historyList" class="cards-list"></div>
+      </section>
+
+      <section class="view" data-view="reminders">
+        <div class="hero-info"><span class="hero-info-icon">🔔</span><div><h2>Receba lembretes das suas contas</h2><p>Escolha quando deseja ser avisado sobre os vencimentos.</p></div></div>
+        <div class="settings-list">
+          <div class="toggle-card"><span class="field-icon green">▣</span><div><b>7 dias antes</b><small>Avise uma semana antes</small></div><label class="switch"><input type="checkbox" data-reminder="7"><span></span></label></div>
+          <div class="toggle-card"><span class="field-icon orange">▣</span><div><b>3 dias antes</b><small>Avise três dias antes</small></div><label class="switch"><input type="checkbox" data-reminder="3"><span></span></label></div>
+          <div class="toggle-card"><span class="field-icon red">▣</span><div><b>1 dia antes</b><small>Avise um dia antes</small></div><label class="switch"><input type="checkbox" data-reminder="1"><span></span></label></div>
+          <div class="toggle-card"><span class="field-icon blue">▣</span><div><b>No dia do vencimento</b><small>Avise no próprio dia</small></div><label class="switch"><input type="checkbox" data-reminder="0"><span></span></label></div>
+          <div class="toggle-card"><span class="field-icon purple">♫</span><div><b>Notificações sonoras</b><small>Som e vibração no celular</small></div><label class="switch"><input type="checkbox" id="soundToggle"><span></span></label></div>
+        </div>
+        <button class="primary-btn" id="enableNotificationsBtn">Ativar notificações do celular</button>
+        <div class="notification-preview"><small>Prévia do lembrete</small><div><div class="brand-mark mini"><span class="calendar-top"></span><span class="check">✓</span></div><div><b>Dívida em Dia</b><strong>Sua conta Internet vence amanhã</strong><span>Valor: R$ 129,90</span></div></div></div>
+      </section>
+
+      <section class="view" data-view="settings">
+        <div class="settings-title"><h1>Ajustes</h1><p>Personalize sua experiência no app.</p></div>
+        <button class="profile-card" id="editProfileBtn"><span class="profile-avatar">TL</span><div><b id="settingsUserName">José</b><small>Perfil local neste aparelho</small></div><span>›</span></button>
+        <div class="settings-list">
+          <div class="toggle-card"><span class="field-icon blue">☾</span><div><b>Modo escuro</b><small>Altere a aparência do app</small></div><label class="switch"><input type="checkbox" id="darkModeToggle"><span></span></label></div>
+          <button class="settings-row" data-go="categories"><span class="field-icon purple">◇</span><div><b>Categorias</b><small>Gerenciar categorias</small></div><span>›</span></button>
+          <button class="settings-row" data-go="reminders"><span class="field-icon blue">♢</span><div><b>Lembretes</b><small>Configurar notificações</small></div><span>›</span></button>
+          <button class="settings-row" data-go="backup"><span class="field-icon green">↥</span><div><b>Backup e restauração</b><small>Salvar ou restaurar seus dados</small></div><span>›</span></button>
+          <button class="settings-row" id="securityBtn"><span class="field-icon red">◆</span><div><b>Segurança</b><small>Dados salvos somente no aparelho</small></div><span>›</span></button>
+          <button class="settings-row" id="helpBtn"><span class="field-icon blue">?</span><div><b>Ajuda</b><small>Dúvidas frequentes</small></div><span>›</span></button>
+          <button class="settings-row" data-go="about"><span class="field-icon gray">i</span><div><b>Sobre o app</b><small>Versão 1.0</small></div><span>›</span></button>
+        </div>
+        <div class="settings-credit">Dívida em Dia • Versão 1.0<br><b>Desenvolvido por Thiers Lima</b></div>
+      </section>
+
+      <section class="view" data-view="backup">
+        <div class="settings-list">
+          <div class="action-card"><span class="field-icon green">↥</span><div><b>Fazer backup</b><small>Salve todas as dívidas e configurações</small></div><button class="small-action green" id="backupBtn">Gerar backup</button></div>
+          <div class="action-card"><span class="field-icon blue">↧</span><div><b>Restaurar backup</b><small>Selecione um arquivo .json do app</small></div><label class="small-action blue file-label">Escolher arquivo<input type="file" id="restoreInput" accept="application/json,.json"></label></div>
+          <button class="settings-row" id="csvBtn"><span class="field-icon green">X</span><div><b>Exportar para Excel</b><small>Gerar arquivo CSV compatível</small></div><span>›</span></button>
+          <button class="settings-row" id="printBtn"><span class="field-icon red">PDF</span><div><b>Relatório em PDF</b><small>Abre relatório para imprimir/salvar em PDF</small></div><span>›</span></button>
+        </div>
+        <div class="privacy-note">🔒 Seus dados ficam salvos localmente no aparelho. O app não envia suas dívidas para servidores.</div>
+      </section>
+
+      <section class="view" data-view="categories">
+        <div id="categoryList" class="settings-list"></div>
+        <form id="categoryForm" class="inline-add"><input name="category" required maxlength="24" placeholder="Nova categoria"><button class="primary-btn">Adicionar</button></form>
+      </section>
+
+      <section class="view" data-view="about">
+        <div class="about-card">
+          <div class="brand-mark brand-mark-xl"><span class="calendar-top"></span><span class="check">✓</span></div>
+          <h1>Dívida em Dia</h1><p>Suas contas organizadas.<br>Seus vencimentos sob controle.</p>
+          <span class="version-pill">Versão 1.0</span>
+          <p class="about-copy">Aplicativo para controle de dívidas, parcelas, vencimentos, pagamentos e lembretes.</p>
+          <div class="author-card"><small>DESENVOLVIDO POR</small><strong>Thiers Lima</strong></div>
+          <small>© 2026 • Todos os direitos reservados.</small>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="nav-item active" data-go="home"><span>⌂</span><small>Início</small></button>
+      <button class="nav-item" data-go="calendar"><span>▣</span><small>Calendário</small></button>
+      <button class="nav-item new-nav" data-go="new"><span>＋</span><small>Nova</small></button>
+      <button class="nav-item" data-go="history"><span>◷</span><small>Histórico</small></button>
+      <button class="nav-item" data-go="settings"><span>⚙</span><small>Ajustes</small></button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="dialog-backdrop hidden" id="dialogBackdrop"><div class="dialog" id="dialog"></div></div>
+  <script src="app.js"></script>
+</body>
+</html>
