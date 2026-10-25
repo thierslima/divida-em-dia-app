@@ -1,4 +1,4 @@
-DÍVIDA EM DIA — APP ANDROID 1.2
+DÍVIDA EM DIA — APP ANDROID 1.3
 Desenvolvido por Thiers Lima
 
 O QUE JÁ ESTÁ PRONTO
@@ -24,7 +24,7 @@ O QUE JÁ ESTÁ PRONTO
 
 PACOTE ANDROID
 Package ID: com.thierslima.dividaemdia
-Versão: 1.2
+Versão: 1.3
 Min Android: 6.0 (API 23)
 Target/Compile SDK: 35
 
@@ -37,7 +37,7 @@ COMO GERAR O APK NO WINDOWS
 5. Dê dois cliques em GERAR_APK.bat.
 6. Na primeira execução o script baixa o Gradle 8.9.
 7. Ao terminar, aparecerá o arquivo:
-   DividaEmDia-v1.2.apk
+   DividaEmDia-v1.3.apk
 
 OBSERVAÇÃO
 O APK não foi compilado dentro do ambiente do ChatGPT porque este ambiente não possui o Android SDK/Build Tools instalados. O projeto Android e o código dos lembretes nativos estão completos e preparados para compilação.
@@ -52,3 +52,9 @@ NOVIDADES DA VERSÃO 1.2
 - Vibração configurável.
 - Ouvir som selecionado e testar notificação agora.
 - Notificação com nome, valor e vencimento da dívida.
+
+
+NOVIDADES DA VERSÃO 1.3
+- Pendente do mês separado do total pendente.
+- Card principal em carrossel com dois resumos.
+- Parcelas futuras não entram mais no valor pendente do mês atual.

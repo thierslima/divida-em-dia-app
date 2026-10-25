@@ -11,8 +11,8 @@ Aplicativo Android para controle de dívidas e vencimentos.
 3. Entre em **Gerar APK - Dívida em Dia**.
 4. Clique em **Run workflow** (ou faça um novo push para a branch main/master).
 5. Aguarde a compilação terminar.
-6. Abra a execução concluída e baixe o artifact **DividaEmDia-v1.2-APK**.
-7. Dentro do ZIP do artifact estará o arquivo `DividaEmDia-v1.2.apk`.
+6. Abra a execução concluída e baixe o artifact **DividaEmDia-v1.3-APK**.
+7. Dentro do ZIP do artifact estará o arquivo `DividaEmDia-v1.3.apk`.
 
 ## Recursos
 
@@ -46,3 +46,10 @@ Package ID: `com.thierslima.dividaemdia`
 - Vibração configurável.
 - Botão para ouvir o som e botão para testar a notificação imediatamente.
 - Notificações mostram nome da dívida, valor e data de vencimento.
+
+
+## Versão 1.3
+- Card principal da tela inicial transformado em carrossel.
+- “Pendente do mês” soma somente contas/parcelas com vencimento no mês atual.
+- “Total pendente” mostra todas as contas e parcelas ainda não pagas, inclusive meses futuros.
+- Indicadores permitem deslizar ou tocar para alternar entre os dois totais.

@@ -89,12 +89,13 @@ function card(d){
 function empty(text){return `<div class="empty-card">${esc(text)}</div>`;}
 
 function renderHome(){
- const pending=pendingDebts(), late=pending.filter(d=>statusOf(d)==='late'), week=pending.filter(d=>{const n=dayDiff(d.due);return n>=0&&n<=7}), today=pending.filter(d=>statusOf(d)==='today');
+ const pending=pendingDebts(), monthPending=monthDebts().filter(d=>d.status!=='paid'), late=pending.filter(d=>statusOf(d)==='late'), week=pending.filter(d=>{const n=dayDiff(d.due);return n>=0&&n<=7}), today=pending.filter(d=>statusOf(d)==='today');
  const paid=monthDebts().filter(d=>d.status==='paid');
  $('#monthLabel').textContent=`Resumo de ${monthName(new Date())}`;
  const displayName=String(data.settings.userName||'').trim();
  $('#welcomeTitle').textContent=displayName?`Olá, ${displayName}! 👋`:'Olá! 👋';
- $('#totalPending').textContent=money(pending.reduce((a,d)=>a+d.amount,0));$('#pendingCount').textContent=`${pending.length} ${pending.length===1?'conta':'contas'}`;
+ $('#monthPending').textContent=money(monthPending.reduce((a,d)=>a+d.amount,0));$('#monthPendingCount').textContent=`${monthPending.length} ${monthPending.length===1?'conta neste mês':'contas neste mês'}`;
+ $('#totalPending').textContent=money(pending.reduce((a,d)=>a+d.amount,0));$('#pendingCount').textContent=`${pending.length} ${pending.length===1?'conta/parcela restante':'contas/parcelas restantes'}`;
  $('#lateTotal').textContent=money(late.reduce((a,d)=>a+d.amount,0));$('#lateCount').textContent=`${late.length} ${late.length===1?'conta':'contas'}`;
  $('#weekTotal').textContent=money(week.reduce((a,d)=>a+d.amount,0));$('#weekCount').textContent=`${week.length} ${week.length===1?'conta':'contas'}`;
  $('#paidMonth').textContent=money(paid.reduce((a,d)=>a+d.amount,0));$('#paidCount').textContent=`${paid.length} ${paid.length===1?'conta':'contas'}`;
@@ -199,7 +200,7 @@ function renderAll(){renderHome();renderDebts();renderHistory();renderCalendar()
 
 const meta={
  home:null,debts:['Minhas dívidas','Todas as contas em um só lugar'],new:['Nova dívida','Cadastre uma conta ou parcela'],detail:['Detalhes da dívida','Informações e pagamentos'],calendar:null,history:null,
- reminders:['Lembretes','Nunca mais perca um vencimento'],settings:null,backup:['Backup e restauração','Proteja seus dados'],categories:['Categorias','Organize suas contas'],about:['Sobre o app','Dívida em Dia • Versão 1.2']
+ reminders:['Lembretes','Nunca mais perca um vencimento'],settings:null,backup:['Backup e restauração','Proteja seus dados'],categories:['Categorias','Organize suas contas'],about:['Sobre o app','Dívida em Dia • Versão 1.3']
 };
 function go(view,push=true){
  if(!document.querySelector(`[data-view="${view}"]`))return;if(push&&currentView!==view)previousViews.push(currentView);currentView=view;
@@ -285,6 +286,20 @@ addEventListener('click',async e=>{
  const shortcut=e.target.closest('[data-filter-shortcut]');if(shortcut){const f=shortcut.dataset.filterShortcut;if(f==='paid'){historyFilter='paid';go('history');}else{debtFilter=f==='week'||f==='today'?'pending':f;go('debts');}return;}
  const dc=e.target.closest('[data-delete-category]');if(dc){if(data.categories.length<=1){toast('Mantenha pelo menos uma categoria.');return;}const cat=dc.dataset.deleteCategory;if(data.debts.some(x=>x.category===cat)){toast('Essa categoria está sendo usada por uma dívida.');return;}data.categories=data.categories.filter(x=>x!==cat);save();renderCategories();return;}
 });
+
+const summaryTrack=$('#summaryTrack');
+const summaryDots=$$('[data-summary-slide]');
+function setSummarySlide(index,smooth=true){
+ if(!summaryTrack)return;
+ const i=Math.max(0,Math.min(1,Number(index)||0));
+ summaryTrack.scrollTo({left:summaryTrack.clientWidth*i,behavior:smooth?'smooth':'auto'});
+ summaryDots.forEach((dot,n)=>dot.classList.toggle('active',n===i));
+}
+summaryDots.forEach(dot=>dot.addEventListener('click',()=>setSummarySlide(dot.dataset.summarySlide)));
+if(summaryTrack){
+ let summaryScrollTimer;
+ summaryTrack.addEventListener('scroll',()=>{clearTimeout(summaryScrollTimer);summaryScrollTimer=setTimeout(()=>{const i=Math.round(summaryTrack.scrollLeft/Math.max(1,summaryTrack.clientWidth));summaryDots.forEach((dot,n)=>dot.classList.toggle('active',n===i));},80)});
+}
 
 $('#notificationBtn').addEventListener('click',()=>go('reminders'));
 $('#prevMonth').addEventListener('click',()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar()});

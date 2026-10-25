@@ -41,9 +41,21 @@
     <main>
       <section class="view active" data-view="home">
         <div class="welcome-row"><div><h1 id="welcomeTitle">Olá! 👋</h1><p id="monthLabel"></p></div></div>
-        <div class="summary-card">
-          <div><span>Total pendente</span><strong id="totalPending">R$ 0,00</strong><small id="pendingCount">0 contas</small></div>
-          <div class="mini-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="summary-carousel" id="summaryCarousel" aria-label="Resumo de valores pendentes">
+          <div class="summary-track" id="summaryTrack">
+            <article class="summary-card summary-month">
+              <div><span>Pendente do mês</span><strong id="monthPending">R$ 0,00</strong><small id="monthPendingCount">0 contas neste mês</small></div>
+              <div class="mini-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            </article>
+            <article class="summary-card summary-total">
+              <div><span>Total pendente</span><strong id="totalPending">R$ 0,00</strong><small id="pendingCount">0 contas/parcelas restantes</small></div>
+              <div class="summary-total-icon" aria-hidden="true">Σ</div>
+            </article>
+          </div>
+          <div class="summary-dots" aria-label="Alternar resumo">
+            <button type="button" class="active" data-summary-slide="0" aria-label="Ver pendente do mês"></button>
+            <button type="button" data-summary-slide="1" aria-label="Ver total pendente"></button>
+          </div>
         </div>
         <div class="stats-grid">
           <button class="stat-card danger" data-filter-shortcut="late"><span class="stat-icon">!</span><div><small>Atrasadas</small><strong id="lateTotal">R$ 0,00</strong><em id="lateCount">0 contas</em></div></button>
@@ -161,9 +173,9 @@
           <button class="settings-row" data-go="backup"><span class="field-icon green">↥</span><div><b>Backup e restauração</b><small>Salvar ou restaurar seus dados</small></div><span>›</span></button>
           <button class="settings-row" id="securityBtn"><span class="field-icon red">◆</span><div><b>Segurança</b><small>Dados salvos somente no aparelho</small></div><span>›</span></button>
           <button class="settings-row" id="helpBtn"><span class="field-icon blue">?</span><div><b>Ajuda</b><small>Dúvidas frequentes</small></div><span>›</span></button>
-          <button class="settings-row" data-go="about"><span class="field-icon gray">i</span><div><b>Sobre o app</b><small>Versão 1.2</small></div><span>›</span></button>
+          <button class="settings-row" data-go="about"><span class="field-icon gray">i</span><div><b>Sobre o app</b><small>Versão 1.3</small></div><span>›</span></button>
         </div>
-        <div class="settings-credit">Dívida em Dia • Versão 1.2<br><b>Desenvolvido por Thiers Lima</b></div>
+        <div class="settings-credit">Dívida em Dia • Versão 1.3<br><b>Desenvolvido por Thiers Lima</b></div>
       </section>
 
       <section class="view" data-view="backup">
@@ -185,7 +197,7 @@
         <div class="about-card">
           <div class="brand-mark brand-mark-xl"><span class="calendar-top"></span><span class="check">✓</span></div>
           <h1>Dívida em Dia</h1><p>Suas contas organizadas.<br>Seus vencimentos sob controle.</p>
-          <span class="version-pill">Versão 1.2</span>
+          <span class="version-pill">Versão 1.3</span>
           <p class="about-copy">Aplicativo para controle de dívidas, parcelas, vencimentos, pagamentos e lembretes.</p>
           <div class="author-card"><small>DESENVOLVIDO POR</small><strong>Thiers Lima</strong></div>
           <small>© 2026 • Todos os direitos reservados.</small>
