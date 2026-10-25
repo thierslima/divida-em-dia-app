@@ -8,7 +8,7 @@ Aplicativo Android para controle de dívidas e vencimentos.
 
 1. Envie todos os arquivos desta pasta para a raiz de um repositório GitHub.
 2. Abra a aba **Actions** do repositório.
-3. Entre em **Gerar APK - Divida em Dia**.
+3. Entre em **Gerar APK - Dívida em Dia**.
 4. Clique em **Run workflow** (ou faça um novo push para a branch main/master).
 5. Aguarde a compilação terminar.
 6. Abra a execução concluída e baixe o artifact **DividaEmDia-v1.0-APK**.
@@ -28,3 +28,10 @@ Aplicativo Android para controle de dívidas e vencimentos.
 - Uso offline
 
 Package ID: `com.thierslima.dividaemdia`
+
+
+## Versão 1.1
+- Inicialização limpa, sem dívidas de demonstração.
+- Nome do usuário opcional e personalizável.
+- Histórico com seleção por mês/ano.
+- Migração automática dos dados de demonstração da versão 1.0.

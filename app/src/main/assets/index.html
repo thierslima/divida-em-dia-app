@@ -40,7 +40,7 @@
 
     <main>
       <section class="view active" data-view="home">
-        <div class="welcome-row"><div><h1>Olá, <span id="userName">José</span>! 👋</h1><p id="monthLabel"></p></div></div>
+        <div class="welcome-row"><div><h1 id="welcomeTitle">Olá! 👋</h1><p id="monthLabel"></p></div></div>
         <div class="summary-card">
           <div><span>Total pendente</span><strong id="totalPending">R$ 0,00</strong><small id="pendingCount">0 contas</small></div>
           <div class="mini-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -67,7 +67,7 @@
 
       <section class="view" data-view="new">
         <form id="debtForm" class="form-stack">
-          <div class="field-card"><span class="field-icon blue">▤</span><label>Nome da dívida<input required name="name" placeholder="Ex.: Cartão Nubank" autocomplete="off" /></label></div>
+          <div class="field-card"><span class="field-icon blue">▤</span><label>Nome da dívida<input required name="name" placeholder="Ex.: Energia, aluguel..." autocomplete="off" /></label></div>
           <div class="field-card"><span class="field-icon blue">●</span><label>Valor da parcela (R$)<input required name="amount" inputmode="decimal" placeholder="0,00" autocomplete="off" /></label></div>
           <div class="field-card"><span class="field-icon orange">▣</span><label>Data de vencimento<input required name="due" type="date" /></label></div>
           <div class="field-card"><span class="field-icon purple">◇</span><label>Categoria<select name="category" id="categorySelect"></select></label></div>
@@ -98,6 +98,7 @@
 
       <section class="view" data-view="history">
         <div class="history-title"><h1>Histórico</h1><p>Acompanhe todos os seus pagamentos</p></div>
+        <div class="history-period"><label>Mês do histórico<select id="historyMonthSelect"></select></label></div>
         <div class="filter-row">
           <button class="chip active" data-history-filter="paid">Pagas</button>
           <button class="chip" data-history-filter="pending">Pendentes</button>
@@ -122,12 +123,12 @@
           <div class="toggle-card"><span class="field-icon purple">♫</span><div><b>Notificações sonoras</b><small>Som e vibração no celular</small></div><label class="switch"><input type="checkbox" id="soundToggle"><span></span></label></div>
         </div>
         <button class="primary-btn" id="enableNotificationsBtn">Ativar notificações do celular</button>
-        <div class="notification-preview"><small>Prévia do lembrete</small><div><div class="brand-mark mini"><span class="calendar-top"></span><span class="check">✓</span></div><div><b>Dívida em Dia</b><strong>Sua conta Internet vence amanhã</strong><span>Valor: R$ 129,90</span></div></div></div>
+        <div class="notification-preview"><small>Prévia do lembrete</small><div><div class="brand-mark mini"><span class="calendar-top"></span><span class="check">✓</span></div><div><b>Dívida em Dia</b><strong>Sua conta vence amanhã</strong><span>O valor e o vencimento aparecem aqui.</span></div></div></div>
       </section>
 
       <section class="view" data-view="settings">
         <div class="settings-title"><h1>Ajustes</h1><p>Personalize sua experiência no app.</p></div>
-        <button class="profile-card" id="editProfileBtn"><span class="profile-avatar">TL</span><div><b id="settingsUserName">José</b><small>Perfil local neste aparelho</small></div><span>›</span></button>
+        <button class="profile-card" id="editProfileBtn"><span class="profile-avatar" id="profileAvatar">👤</span><div><b id="settingsUserName">Adicionar seu nome</b><small>Perfil local neste aparelho</small></div><span>›</span></button>
         <div class="settings-list">
           <div class="toggle-card"><span class="field-icon blue">☾</span><div><b>Modo escuro</b><small>Altere a aparência do app</small></div><label class="switch"><input type="checkbox" id="darkModeToggle"><span></span></label></div>
           <button class="settings-row" data-go="categories"><span class="field-icon purple">◇</span><div><b>Categorias</b><small>Gerenciar categorias</small></div><span>›</span></button>
@@ -135,9 +136,9 @@
           <button class="settings-row" data-go="backup"><span class="field-icon green">↥</span><div><b>Backup e restauração</b><small>Salvar ou restaurar seus dados</small></div><span>›</span></button>
           <button class="settings-row" id="securityBtn"><span class="field-icon red">◆</span><div><b>Segurança</b><small>Dados salvos somente no aparelho</small></div><span>›</span></button>
           <button class="settings-row" id="helpBtn"><span class="field-icon blue">?</span><div><b>Ajuda</b><small>Dúvidas frequentes</small></div><span>›</span></button>
-          <button class="settings-row" data-go="about"><span class="field-icon gray">i</span><div><b>Sobre o app</b><small>Versão 1.0</small></div><span>›</span></button>
+          <button class="settings-row" data-go="about"><span class="field-icon gray">i</span><div><b>Sobre o app</b><small>Versão 1.1</small></div><span>›</span></button>
         </div>
-        <div class="settings-credit">Dívida em Dia • Versão 1.0<br><b>Desenvolvido por Thiers Lima</b></div>
+        <div class="settings-credit">Dívida em Dia • Versão 1.1<br><b>Desenvolvido por Thiers Lima</b></div>
       </section>
 
       <section class="view" data-view="backup">
@@ -159,7 +160,7 @@
         <div class="about-card">
           <div class="brand-mark brand-mark-xl"><span class="calendar-top"></span><span class="check">✓</span></div>
           <h1>Dívida em Dia</h1><p>Suas contas organizadas.<br>Seus vencimentos sob controle.</p>
-          <span class="version-pill">Versão 1.0</span>
+          <span class="version-pill">Versão 1.1</span>
           <p class="about-copy">Aplicativo para controle de dívidas, parcelas, vencimentos, pagamentos e lembretes.</p>
           <div class="author-card"><small>DESENVOLVIDO POR</small><strong>Thiers Lima</strong></div>
           <small>© 2026 • Todos os direitos reservados.</small>

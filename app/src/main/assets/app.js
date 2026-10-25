@@ -14,6 +14,9 @@ const monthName=d=>d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).r
 const dayDiff=s=>Math.round((parseDate(s)-parseDate(todayISO()))/86400000);
 const addMonths=(iso,n)=>{const d=parseDate(iso),day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+n);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return isoDate(d)};
 const sameMonth=(iso,d=new Date())=>{const x=parseDate(iso);return x.getMonth()===d.getMonth()&&x.getFullYear()===d.getFullYear()};
+const monthKey=iso=>String(iso||'').slice(0,7);
+const monthLabelFromKey=key=>{const [y,m]=String(key).split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase())};
+const historyDate=d=>(d.status==='paid'?(d.paidAt||d.due):d.due);
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
 const iconMap={
@@ -21,37 +24,45 @@ const iconMap={
 };
 const iconFor=c=>iconMap[c]||'📌';
 
-function sampleData(){
-  const now=new Date(); const rel=n=>{const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+n,12);return isoDate(d)};
-  const series1=uuid(),series2=uuid(),series3=uuid();
+function defaultData(){
   return {
-    version:2,
-    settings:{userName:'José',darkMode:false,sound:true,reminders:[7,3,1,0]},
+    version:3,
+    settings:{userName:'',darkMode:false,sound:true,reminders:[7,3,1,0]},
     categories:['Cartão de Crédito','Contas de Casa','Internet','Água','Energia','Telefone','Supermercado','Saúde','Educação','Transporte','Empréstimo','Financiamento','Assinaturas','Outros'],
-    debts:[
-      {id:uuid(),seriesId:series1,name:'Energia',amount:180,due:rel(0),category:'Energia',status:'pending',note:'Conta residencial',installment:1,totalInstallments:1,recurring:true,paidAt:null},
-      {id:uuid(),seriesId:series2,name:'Cartão Nubank',amount:720,due:rel(2),category:'Cartão de Crédito',status:'pending',note:'Fatura do mês',installment:3,totalInstallments:12,recurring:false,paidAt:null},
-      {id:uuid(),seriesId:series2,name:'Cartão Nubank',amount:720,due:addMonths(rel(2),1),category:'Cartão de Crédito',status:'pending',note:'Fatura do mês',installment:4,totalInstallments:12,recurring:false,paidAt:null},
-      {id:uuid(),seriesId:series2,name:'Cartão Nubank',amount:720,due:addMonths(rel(2),2),category:'Cartão de Crédito',status:'pending',note:'Fatura do mês',installment:5,totalInstallments:12,recurring:false,paidAt:null},
-      {id:uuid(),seriesId:series3,name:'Internet',amount:120,due:rel(8),category:'Internet',status:'pending',note:'Vivo Fibra',installment:1,totalInstallments:1,recurring:true,paidAt:null},
-      {id:uuid(),seriesId:uuid(),name:'Academia',amount:80,due:rel(-4),category:'Saúde',status:'paid',note:'Mensal',installment:1,totalInstallments:1,recurring:true,paidAt:rel(-4)},
-      {id:uuid(),seriesId:uuid(),name:'Supermercado',amount:350,due:rel(-8),category:'Supermercado',status:'paid',note:'Compra do mês',installment:1,totalInstallments:1,recurring:false,paidAt:rel(-8)}
-    ]
+    debts:[]
   };
 }
 
+function isLegacyDemoDebt(d){
+  const sig=`${d.name}|${Number(d.amount)}|${d.note||''}`;
+  return new Set([
+    'Energia|180|Conta residencial',
+    'Cartão Nubank|720|Fatura do mês',
+    'Internet|120|Vivo Fibra',
+    'Academia|80|Mensal',
+    'Supermercado|350|Compra do mês'
+  ]).has(sig);
+}
+
 function normalize(raw){
-  const fallback=sampleData(); if(!raw||typeof raw!=='object') return fallback;
+  const fallback=defaultData(); if(!raw||typeof raw!=='object') return fallback;
+  const settings={...fallback.settings,...(raw.settings||{}),reminders:Array.isArray(raw.settings?.reminders)?raw.settings.reminders:(raw.reminders||fallback.settings.reminders)};
+  let debts=Array.isArray(raw.debts)?raw.debts.map(d=>({seriesId:d.seriesId||d.id||uuid(),installment:1,totalInstallments:1,recurring:false,paidAt:null,status:'pending',...d})):[];
+  // Migração da versão de demonstração: remove apenas os registros-exemplo conhecidos.
+  if(Number(raw.version||0)<3){
+    debts=debts.filter(d=>!isLegacyDemoDebt(d));
+    if(String(settings.userName||'').trim().toLowerCase()==='josé') settings.userName='';
+  }
   return {
-    version:2,
-    settings:{...fallback.settings,...(raw.settings||{}),reminders:Array.isArray(raw.settings?.reminders)?raw.settings.reminders:(raw.reminders||fallback.settings.reminders)},
+    version:3,
+    settings,
     categories:Array.isArray(raw.categories)&&raw.categories.length?raw.categories:fallback.categories,
-    debts:Array.isArray(raw.debts)?raw.debts.map(d=>({seriesId:d.seriesId||d.id||uuid(),installment:1,totalInstallments:1,recurring:false,paidAt:null,status:'pending',...d})):fallback.debts
+    debts
   };
 }
 
 let data=normalize(JSON.parse(localStorage.getItem(KEY)||'null'));
-let currentView='home', previousViews=[], debtFilter='all', historyFilter='paid', historyNewest=true;
+let currentView='home', previousViews=[], debtFilter='all', historyFilter='paid', historyNewest=true, historyMonthKey=todayISO().slice(0,7);
 let calDate=new Date(), selectedCalDay=todayISO(), detailId=null;
 
 function save(sync=true){localStorage.setItem(KEY,JSON.stringify(data));if(sync)syncNativeReminders();}
@@ -74,7 +85,8 @@ function renderHome(){
  const pending=pendingDebts(), late=pending.filter(d=>statusOf(d)==='late'), week=pending.filter(d=>{const n=dayDiff(d.due);return n>=0&&n<=7}), today=pending.filter(d=>statusOf(d)==='today');
  const paid=monthDebts().filter(d=>d.status==='paid');
  $('#monthLabel').textContent=`Resumo de ${monthName(new Date())}`;
- $('#userName').textContent=data.settings.userName||'Você';
+ const displayName=String(data.settings.userName||'').trim();
+ $('#welcomeTitle').textContent=displayName?`Olá, ${displayName}! 👋`:'Olá! 👋';
  $('#totalPending').textContent=money(pending.reduce((a,d)=>a+d.amount,0));$('#pendingCount').textContent=`${pending.length} ${pending.length===1?'conta':'contas'}`;
  $('#lateTotal').textContent=money(late.reduce((a,d)=>a+d.amount,0));$('#lateCount').textContent=`${late.length} ${late.length===1?'conta':'contas'}`;
  $('#weekTotal').textContent=money(week.reduce((a,d)=>a+d.amount,0));$('#weekCount').textContent=`${week.length} ${week.length===1?'conta':'contas'}`;
@@ -92,15 +104,27 @@ function renderDebts(){
  $('#debtList').innerHTML=list.length?list.map(card).join(''):empty('Nenhuma dívida neste filtro.');
 }
 
+function renderHistoryMonthOptions(){
+ const select=$('#historyMonthSelect'); if(!select)return;
+ const keys=new Set([todayISO().slice(0,7),historyMonthKey]);
+ data.debts.forEach(d=>{if(d.due)keys.add(monthKey(d.due));if(d.paidAt)keys.add(monthKey(d.paidAt));});
+ const ordered=[...keys].filter(Boolean).sort((a,b)=>b.localeCompare(a));
+ if(!ordered.includes(historyMonthKey))historyMonthKey=todayISO().slice(0,7);
+ select.innerHTML=ordered.map(k=>`<option value="${k}" ${k===historyMonthKey?'selected':''}>${monthLabelFromKey(k)}</option>`).join('');
+}
 function renderHistory(){
- const month=monthDebts(), paidMonth=month.filter(d=>d.status==='paid');
+ renderHistoryMonthOptions();
+ const dueMonth=data.debts.filter(d=>monthKey(d.due)===historyMonthKey);
+ const paidMonth=data.debts.filter(d=>d.status==='paid'&&monthKey(d.paidAt||d.due)===historyMonthKey);
  $('#historyMonthTotal').textContent=money(paidMonth.reduce((a,d)=>a+d.amount,0));
  $('#historyMonthCount').textContent=`${paidMonth.length} ${paidMonth.length===1?'pagamento':'pagamentos'}`;
- $('#historyPaidRatio').textContent=`${paidMonth.length} de ${month.length}`;
- $('#historyPaidPercent').textContent=`${month.length?Math.round(paidMonth.length/month.length*100):0}% do mês`;
- let list=[...data.debts]; if(historyFilter!=='all') list=list.filter(d=>statusOf(d)===historyFilter || (historyFilter==='pending'&&statusOf(d)==='today'));
- list.sort((a,b)=>{const ad=a.paidAt||a.due,bd=b.paidAt||b.due;return historyNewest?bd.localeCompare(ad):ad.localeCompare(bd);});
- $('#historyList').innerHTML=list.length?list.map(card).join(''):empty('Nenhuma movimentação neste filtro.');
+ const duePaid=dueMonth.filter(d=>d.status==='paid').length;
+ $('#historyPaidRatio').textContent=`${duePaid} de ${dueMonth.length}`;
+ $('#historyPaidPercent').textContent=`${dueMonth.length?Math.round(duePaid/dueMonth.length*100):0}% do mês`;
+ let list=data.debts.filter(d=>monthKey(historyDate(d))===historyMonthKey);
+ if(historyFilter!=='all') list=list.filter(d=>statusOf(d)===historyFilter || (historyFilter==='pending'&&statusOf(d)==='today'));
+ list.sort((a,b)=>{const ad=historyDate(a),bd=historyDate(b);return historyNewest?bd.localeCompare(ad):ad.localeCompare(bd);});
+ $('#historyList').innerHTML=list.length?list.map(card).join(''):empty(`Nenhuma movimentação em ${monthLabelFromKey(historyMonthKey)}.`);
  $('#historySortBtn').textContent=historyNewest?'Mais recente ↓':'Mais antigo ↑';
 }
 
@@ -156,13 +180,16 @@ function renderReminders(){
  else if('Notification' in window && Notification.permission==='granted') $('#enableNotificationsBtn').textContent='Notificações ativadas';
 }
 function renderSettings(){
- $('#settingsUserName').textContent=data.settings.userName||'Você'; $('#darkModeToggle').checked=!!data.settings.darkMode;document.body.classList.toggle('dark',!!data.settings.darkMode);
+ const name=String(data.settings.userName||'').trim();
+ $('#settingsUserName').textContent=name||'Adicionar seu nome';
+ const avatar=$('#profileAvatar');if(avatar)avatar.textContent=name?name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase():'👤';
+ $('#darkModeToggle').checked=!!data.settings.darkMode;document.body.classList.toggle('dark',!!data.settings.darkMode);
 }
 function renderAll(){renderHome();renderDebts();renderHistory();renderCalendar();renderCategories();renderReminders();renderSettings();if(currentView==='detail')renderDetail();save(false);}
 
 const meta={
  home:null,debts:['Minhas dívidas','Todas as contas em um só lugar'],new:['Nova dívida','Cadastre uma conta ou parcela'],detail:['Detalhes da dívida','Informações e pagamentos'],calendar:null,history:null,
- reminders:['Lembretes','Nunca mais perca um vencimento'],settings:null,backup:['Backup e restauração','Proteja seus dados'],categories:['Categorias','Organize suas contas'],about:['Sobre o app','Dívida em Dia • Versão 1.0']
+ reminders:['Lembretes','Nunca mais perca um vencimento'],settings:null,backup:['Backup e restauração','Proteja seus dados'],categories:['Categorias','Organize suas contas'],about:['Sobre o app','Dívida em Dia • Versão 1.1']
 };
 function go(view,push=true){
  if(!document.querySelector(`[data-view="${view}"]`))return;if(push&&currentView!==view)previousViews.push(currentView);currentView=view;
@@ -235,6 +262,7 @@ $('#prevMonth').addEventListener('click',()=>{calDate=new Date(calDate.getFullYe
 $('#nextMonth').addEventListener('click',()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar()});
 $('#todayBtn').addEventListener('click',()=>{calDate=new Date();selectedCalDay=todayISO();renderCalendar()});
 $('#historySortBtn').addEventListener('click',()=>{historyNewest=!historyNewest;renderHistory()});
+$('#historyMonthSelect').addEventListener('change',e=>{historyMonthKey=e.target.value;renderHistory();});
 $('#installmentsToggle').addEventListener('change',e=>{$('#installmentsField').classList.toggle('hidden',!e.target.checked);renderNewPreview()});
 $('#debtForm').addEventListener('input',renderNewPreview);$('#debtForm').addEventListener('change',renderNewPreview);
 $('#debtForm').addEventListener('submit',e=>{
@@ -250,7 +278,7 @@ $('#enableNotificationsBtn').addEventListener('click',enableNotifications);
 $('#backupBtn').addEventListener('click',exportBackup);$('#csvBtn').addEventListener('click',exportCsv);$('#printBtn').addEventListener('click',printReport);
 $('#restoreInput').addEventListener('change',e=>{const file=e.target.files?.[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{const parsed=JSON.parse(r.result);data=normalize(parsed);save();renderAll();toast('Backup restaurado com sucesso.');}catch(err){toast('Arquivo de backup inválido.');}finally{e.target.value=''}};r.readAsText(file);});
 $('#categoryForm').addEventListener('submit',e=>{e.preventDefault();const input=e.target.elements.category,name=input.value.trim();if(!name)return;if(data.categories.some(c=>c.toLowerCase()===name.toLowerCase())){toast('Essa categoria já existe.');return;}data.categories.push(name);input.value='';save();renderCategories();toast('Categoria adicionada.');});
-$('#editProfileBtn').addEventListener('click',async()=>{const v=await dialog('Seu nome','Como você quer ser chamado no app?',{inputValue:data.settings.userName||'',confirm:'Salvar'});if(v===null)return;const name=v.trim();if(name){data.settings.userName=name;save(false);renderAll();toast('Nome atualizado.');}});
+$('#editProfileBtn').addEventListener('click',async()=>{const v=await dialog('Seu nome','Digite seu nome para personalizar a tela inicial.',{inputValue:data.settings.userName||'',confirm:'Salvar'});if(v===null)return;const name=v.trim();if(name){data.settings.userName=name;save(false);renderAll();toast('Nome atualizado.');}});
 $('#securityBtn').addEventListener('click',()=>dialog('Segurança','O Dívida em Dia funciona offline e mantém seus dados localmente neste aparelho. Nenhuma dívida é enviada para servidores.',{cancel:'Fechar',confirm:'Entendi'}));
 $('#helpBtn').addEventListener('click',()=>dialog('Ajuda','Cadastre uma dívida, escolha o vencimento e ative os lembretes. Quando pagar, toque na dívida e marque como paga. Contas recorrentes criam o próximo mês automaticamente.',{cancel:'Fechar',confirm:'Entendi'}));
 
