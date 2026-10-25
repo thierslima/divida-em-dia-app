@@ -74,6 +74,17 @@
           <div class="toggle-card"><span class="field-icon green">↻</span><div><b>Conta recorrente</b><small>Essa dívida se repete todo mês</small></div><label class="switch"><input type="checkbox" name="recurring"><span></span></label></div>
           <div class="toggle-card"><span class="field-icon purple">▦</span><div><b>É parcelada?</b><small>Crie automaticamente várias parcelas</small></div><label class="switch"><input type="checkbox" id="installmentsToggle"><span></span></label></div>
           <div class="field-card hidden" id="installmentsField"><span class="field-icon blue">☷</span><label>Quantidade de parcelas<input name="installments" type="number" min="2" max="120" value="2" /></label></div>
+          <div class="field-card"><span class="field-icon purple">♫</span><label>Som desta dívida<select name="soundMode" id="debtSoundSelect">
+            <option value="inherit">Usar som geral do app</option>
+            <option value="exclusive">Som Dívida em Dia</option>
+            <option value="soft">Som 1 — Alerta suave</option>
+            <option value="clear">Som 2 — Aviso claro</option>
+            <option value="double">Som 3 — Toque duplo</option>
+            <option value="system">Som padrão do celular</option>
+            <option value="silent">Sem som</option>
+          </select></label></div>
+          <div class="sound-inline-actions"><button type="button" class="soft-btn" id="newDebtPickSystem">♫ Escolher som do celular</button><button type="button" class="soft-btn" id="newDebtPickFile">▤ Escolher arquivo de áudio</button></div>
+          <div class="picked-sound hidden" id="newDebtPickedSound"></div>
           <div class="field-card"><span class="field-icon gray">▧</span><label>Observações (opcional)<textarea name="note" rows="2" placeholder="Ex.: Compra de celular, parcela..." ></textarea></label></div>
           <div class="preview-card" id="newDebtPreview"><small>Pré-visualização</small><div><span class="category-avatar">💳</span><div><b>Nova dívida</b><em>Selecione os dados acima</em></div><strong>R$ 0,00</strong></div></div>
           <button class="primary-btn" type="submit">Salvar dívida</button>
@@ -120,10 +131,24 @@
           <div class="toggle-card"><span class="field-icon orange">▣</span><div><b>3 dias antes</b><small>Avise três dias antes</small></div><label class="switch"><input type="checkbox" data-reminder="3"><span></span></label></div>
           <div class="toggle-card"><span class="field-icon red">▣</span><div><b>1 dia antes</b><small>Avise um dia antes</small></div><label class="switch"><input type="checkbox" data-reminder="1"><span></span></label></div>
           <div class="toggle-card"><span class="field-icon blue">▣</span><div><b>No dia do vencimento</b><small>Avise no próprio dia</small></div><label class="switch"><input type="checkbox" data-reminder="0"><span></span></label></div>
-          <div class="toggle-card"><span class="field-icon purple">♫</span><div><b>Notificações sonoras</b><small>Som e vibração no celular</small></div><label class="switch"><input type="checkbox" id="soundToggle"><span></span></label></div>
+          <div class="field-card sound-choice-card"><span class="field-icon purple">♫</span><label>Som padrão dos lembretes<select id="globalSoundSelect">
+            <option value="exclusive">Som Dívida em Dia — exclusivo</option>
+            <option value="soft">Som 1 — Alerta suave</option>
+            <option value="clear">Som 2 — Aviso claro</option>
+            <option value="double">Som 3 — Toque duplo</option>
+            <option value="system">Som padrão do celular</option>
+            <option value="silent">Sem som</option>
+          </select></label></div>
+          <div class="toggle-card"><span class="field-icon green">≈</span><div><b>Vibração</b><small>Vibrar junto com o lembrete</small></div><label class="switch"><input type="checkbox" id="vibrationToggle"><span></span></label></div>
         </div>
+        <div class="sound-picker-grid">
+          <button class="secondary-btn" id="pickSystemSoundBtn">♫ Escolher som do celular</button>
+          <button class="secondary-btn" id="pickAudioSoundBtn">▤ Escolher arquivo de áudio</button>
+        </div>
+        <div class="picked-sound hidden" id="globalPickedSound"></div>
+        <div class="sound-test-grid"><button class="secondary-btn" id="previewSoundBtn">▶ Ouvir som selecionado</button><button class="primary-btn" id="testNotificationBtn">🔔 Testar notificação agora</button></div>
         <button class="primary-btn" id="enableNotificationsBtn">Ativar notificações do celular</button>
-        <div class="notification-preview"><small>Prévia do lembrete</small><div><div class="brand-mark mini"><span class="calendar-top"></span><span class="check">✓</span></div><div><b>Dívida em Dia</b><strong>Sua conta vence amanhã</strong><span>O valor e o vencimento aparecem aqui.</span></div></div></div>
+        <div class="notification-preview"><small>Prévia do lembrete</small><div><div class="brand-mark mini"><span class="calendar-top"></span><span class="check">✓</span></div><div><b>Dívida em Dia</b><strong>Conta vencendo amanhã</strong><span>Energia • R$ 150,00 • Vence em 30/10</span></div></div></div>
       </section>
 
       <section class="view" data-view="settings">
@@ -136,9 +161,9 @@
           <button class="settings-row" data-go="backup"><span class="field-icon green">↥</span><div><b>Backup e restauração</b><small>Salvar ou restaurar seus dados</small></div><span>›</span></button>
           <button class="settings-row" id="securityBtn"><span class="field-icon red">◆</span><div><b>Segurança</b><small>Dados salvos somente no aparelho</small></div><span>›</span></button>
           <button class="settings-row" id="helpBtn"><span class="field-icon blue">?</span><div><b>Ajuda</b><small>Dúvidas frequentes</small></div><span>›</span></button>
-          <button class="settings-row" data-go="about"><span class="field-icon gray">i</span><div><b>Sobre o app</b><small>Versão 1.1</small></div><span>›</span></button>
+          <button class="settings-row" data-go="about"><span class="field-icon gray">i</span><div><b>Sobre o app</b><small>Versão 1.2</small></div><span>›</span></button>
         </div>
-        <div class="settings-credit">Dívida em Dia • Versão 1.1<br><b>Desenvolvido por Thiers Lima</b></div>
+        <div class="settings-credit">Dívida em Dia • Versão 1.2<br><b>Desenvolvido por Thiers Lima</b></div>
       </section>
 
       <section class="view" data-view="backup">
@@ -160,7 +185,7 @@
         <div class="about-card">
           <div class="brand-mark brand-mark-xl"><span class="calendar-top"></span><span class="check">✓</span></div>
           <h1>Dívida em Dia</h1><p>Suas contas organizadas.<br>Seus vencimentos sob controle.</p>
-          <span class="version-pill">Versão 1.1</span>
+          <span class="version-pill">Versão 1.2</span>
           <p class="about-copy">Aplicativo para controle de dívidas, parcelas, vencimentos, pagamentos e lembretes.</p>
           <div class="author-card"><small>DESENVOLVIDO POR</small><strong>Thiers Lima</strong></div>
           <small>© 2026 • Todos os direitos reservados.</small>

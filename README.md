@@ -11,8 +11,8 @@ Aplicativo Android para controle de dívidas e vencimentos.
 3. Entre em **Gerar APK - Dívida em Dia**.
 4. Clique em **Run workflow** (ou faça um novo push para a branch main/master).
 5. Aguarde a compilação terminar.
-6. Abra a execução concluída e baixe o artifact **DividaEmDia-v1.0-APK**.
-7. Dentro do ZIP do artifact estará o arquivo `DividaEmDia-v1.0.apk`.
+6. Abra a execução concluída e baixe o artifact **DividaEmDia-v1.2-APK**.
+7. Dentro do ZIP do artifact estará o arquivo `DividaEmDia-v1.2.apk`.
 
 ## Recursos
 
@@ -35,3 +35,14 @@ Package ID: `com.thierslima.dividaemdia`
 - Nome do usuário opcional e personalizável.
 - Histórico com seleção por mês/ano.
 - Migração automática dos dados de demonstração da versão 1.0.
+
+## Versão 1.2
+- Som exclusivo “Dívida em Dia” incluído no APK.
+- Três sons internos adicionais: Alerta suave, Aviso claro e Toque duplo.
+- Opção de usar o som padrão do Android.
+- Escolha de qualquer som de notificação disponível no celular.
+- Importação de arquivo de áudio do aparelho para usar como notificação.
+- Som geral do app ou som personalizado por dívida.
+- Vibração configurável.
+- Botão para ouvir o som e botão para testar a notificação imediatamente.
+- Notificações mostram nome da dívida, valor e data de vencimento.
