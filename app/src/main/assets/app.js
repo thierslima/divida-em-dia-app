@@ -317,7 +317,33 @@ function exportBackup(){saveTextFile(`divida-em-dia-backup-${todayISO()}.json`,'
 function csvEscape(v){const s=String(v??'');return /[",\n;]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;}
 function exportCsv(){const rows=[['Nome','Valor','Vencimento','Categoria','Status','Parcela','Total de parcelas','Pago em','Observação'],...data.debts.map(d=>[d.name,d.amount.toFixed(2).replace('.',','),dateBR(d.due),d.category,statusLabel(statusOf(d)),d.installment,d.totalInstallments,d.paidAt?dateBR(d.paidAt):'',d.note||''])];saveTextFile(`divida-em-dia-${todayISO()}.csv`,'text/csv;charset=utf-8','\uFEFF'+rows.map(r=>r.map(csvEscape).join(';')).join('\n'));}
 function printReport(){
- let old=$('.report-only');if(old)old.remove();const el=document.createElement('section');el.className='report-only';const pending=pendingDebts();el.innerHTML=`<h1>Dívida em Dia</h1><p>Relatório gerado em ${new Date().toLocaleString('pt-BR')} • Desenvolvido por Thiers Lima</p><p><b>Total pendente:</b> ${money(pending.reduce((a,d)=>a+d.amount,0))}</p><table><thead><tr><th>Conta</th><th>Valor</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>${data.debts.sort((a,b)=>a.due.localeCompare(b.due)).map(d=>`<tr><td>${esc(d.name)}</td><td>${money(d.amount)}</td><td>${dateBR(d.due)}</td><td>${statusLabel(statusOf(d))}</td></tr>`).join('')}</tbody></table>`;document.body.appendChild(el);window.print();}
+ const pending=pendingDebts(), monthPending=monthDebts().filter(d=>d.status!=='paid'), late=pending.filter(d=>statusOf(d)==='late'), paid=monthDebts().filter(d=>d.status==='paid');
+ const rows=[...data.debts].sort((a,b)=>a.due.localeCompare(b.due)).map(d=>({
+  name:d.name+(d.totalInstallments>1?` — Parcela ${d.installment}/${d.totalInstallments}`:''),
+  category:d.category||'',
+  amount:money(d.amount),
+  due:dateBR(d.due),
+  status:statusLabel(statusOf(d)),
+  paidAt:d.paidAt?dateBR(d.paidAt):'',
+  note:d.note||''
+ }));
+ const report={
+  generatedAt:new Date().toLocaleString('pt-BR'),
+  monthLabel:monthName(new Date()),
+  userName:String(data.settings.userName||'').trim(),
+  summary:{
+   monthPending:money(monthPending.reduce((a,d)=>a+d.amount,0)),
+   totalPending:money(pending.reduce((a,d)=>a+d.amount,0)),
+   overdue:money(late.reduce((a,d)=>a+d.amount,0)),
+   paidMonth:money(paid.reduce((a,d)=>a+d.amount,0))
+  },
+  rows
+ };
+ if(nativeAvailable()&&window.AndroidBridge.exportPdf){
+  try{window.AndroidBridge.exportPdf(JSON.stringify(report));toast('Gerando relatório PDF...');return;}catch(e){console.warn('PDF nativo falhou',e);}
+ }
+ let old=$('.report-only');if(old)old.remove();const el=document.createElement('section');el.className='report-only';el.innerHTML=`<h1>Dívida em Dia</h1><p>Relatório gerado em ${report.generatedAt} • Desenvolvido por Thiers Lima</p><p><b>Pendente do mês:</b> ${report.summary.monthPending} &nbsp; <b>Total pendente:</b> ${report.summary.totalPending}</p><table><thead><tr><th>Conta</th><th>Valor</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.amount)}</td><td>${esc(r.due)}</td><td>${esc(r.status)}</td></tr>`).join('')}</tbody></table>`;document.body.appendChild(el);window.print();
+}
 
 // Eventos globais
 addEventListener('click',async e=>{

@@ -8,6 +8,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.graphics.pdf.PdfDocument;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -25,12 +29,16 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class MainActivity extends Activity {
     private static final int NOTIFICATION_PERMISSION_REQUEST = 3101;
@@ -204,6 +212,182 @@ public class MainActivity extends Activity {
         return dest;
     }
 
+    private String fitText(String text, Paint paint, float maxWidth) {
+        if (text == null) return "";
+        if (paint.measureText(text) <= maxWidth) return text;
+        String ellipsis = "…";
+        float ellipsisWidth = paint.measureText(ellipsis);
+        int end = text.length();
+        while (end > 0 && paint.measureText(text.substring(0, end)) + ellipsisWidth > maxWidth) end--;
+        return text.substring(0, Math.max(0, end)) + ellipsis;
+    }
+
+    private void drawPdfHeader(Canvas canvas, Paint paint, int pageNumber, String generatedAt) {
+        paint.setColor(Color.rgb(5, 92, 92));
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        paint.setTextSize(22f);
+        canvas.drawText("Dívida em Dia", 36f, 48f, paint);
+
+        paint.setColor(Color.rgb(70, 85, 100));
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+        paint.setTextSize(9.5f);
+        canvas.drawText("Relatório financeiro • Desenvolvido por Thiers Lima", 36f, 66f, paint);
+        canvas.drawText("Gerado em " + generatedAt, 36f, 80f, paint);
+
+        paint.setTextAlign(Paint.Align.RIGHT);
+        canvas.drawText("Página " + pageNumber, 559f, 66f, paint);
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setColor(Color.rgb(210, 220, 228));
+        paint.setStrokeWidth(1f);
+        canvas.drawLine(36f, 90f, 559f, 90f, paint);
+    }
+
+    private void drawPdfTableHeader(Canvas canvas, Paint paint, float y) {
+        paint.setColor(Color.rgb(236, 245, 245));
+        canvas.drawRect(36f, y - 17f, 559f, y + 7f, paint);
+        paint.setColor(Color.rgb(20, 45, 60));
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        paint.setTextSize(9f);
+        canvas.drawText("Vencimento", 42f, y, paint);
+        canvas.drawText("Conta / Parcela", 112f, y, paint);
+        canvas.drawText("Categoria", 304f, y, paint);
+        canvas.drawText("Valor", 409f, y, paint);
+        canvas.drawText("Status", 486f, y, paint);
+    }
+
+    private void exportPdfNative(String reportJson) {
+        new Thread(() -> {
+            PdfDocument document = new PdfDocument();
+            try {
+                JSONObject report = new JSONObject(reportJson);
+                JSONObject summary = report.optJSONObject("summary");
+                JSONArray rows = report.optJSONArray("rows");
+                String generatedAt = report.optString("generatedAt", new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date()));
+                String monthLabel = report.optString("monthLabel", "Mês atual");
+                String userName = report.optString("userName", "");
+
+                Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+
+                int pageNumber = 1;
+                PdfDocument.Page page = document.startPage(new PdfDocument.PageInfo.Builder(595, 842, pageNumber).create());
+                Canvas canvas = page.getCanvas();
+                drawPdfHeader(canvas, paint, pageNumber, generatedAt);
+
+                float y = 120f;
+                if (!userName.trim().isEmpty()) {
+                    paint.setColor(Color.rgb(20, 45, 60));
+                    paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+                    paint.setTextSize(11f);
+                    canvas.drawText("Titular: " + fitText(userName, paint, 450f), 36f, y, paint);
+                    y += 20f;
+                }
+
+                paint.setColor(Color.rgb(20, 45, 60));
+                paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+                paint.setTextSize(12f);
+                canvas.drawText("Resumo — " + monthLabel, 36f, y, paint);
+                y += 20f;
+
+                String monthPending = summary != null ? summary.optString("monthPending", "R$ 0,00") : "R$ 0,00";
+                String totalPending = summary != null ? summary.optString("totalPending", "R$ 0,00") : "R$ 0,00";
+                String overdue = summary != null ? summary.optString("overdue", "R$ 0,00") : "R$ 0,00";
+                String paidMonth = summary != null ? summary.optString("paidMonth", "R$ 0,00") : "R$ 0,00";
+
+                paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+                paint.setTextSize(10f);
+                paint.setColor(Color.rgb(50, 65, 80));
+                canvas.drawText("Pendente do mês: " + monthPending, 42f, y, paint);
+                canvas.drawText("Total pendente: " + totalPending, 300f, y, paint);
+                y += 18f;
+                canvas.drawText("Atrasadas: " + overdue, 42f, y, paint);
+                canvas.drawText("Pagas no mês: " + paidMonth, 300f, y, paint);
+                y += 32f;
+
+                paint.setColor(Color.rgb(20, 45, 60));
+                paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+                paint.setTextSize(12f);
+                canvas.drawText("Contas e parcelas", 36f, y, paint);
+                y += 28f;
+                drawPdfTableHeader(canvas, paint, y);
+                y += 20f;
+
+                if (rows == null || rows.length() == 0) {
+                    paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+                    paint.setTextSize(10f);
+                    paint.setColor(Color.rgb(90, 100, 110));
+                    canvas.drawText("Nenhuma dívida cadastrada.", 42f, y + 10f, paint);
+                } else {
+                    for (int i = 0; i < rows.length(); i++) {
+                        if (y > 785f) {
+                            document.finishPage(page);
+                            pageNumber++;
+                            page = document.startPage(new PdfDocument.PageInfo.Builder(595, 842, pageNumber).create());
+                            canvas = page.getCanvas();
+                            drawPdfHeader(canvas, paint, pageNumber, generatedAt);
+                            y = 122f;
+                            drawPdfTableHeader(canvas, paint, y);
+                            y += 20f;
+                        }
+
+                        JSONObject row = rows.optJSONObject(i);
+                        if (row == null) continue;
+                        String due = row.optString("due", "");
+                        String name = row.optString("name", "");
+                        String category = row.optString("category", "");
+                        String amount = row.optString("amount", "");
+                        String status = row.optString("status", "");
+
+                        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+                        paint.setTextSize(8.8f);
+                        paint.setColor(Color.rgb(35, 48, 60));
+                        canvas.drawText(fitText(due, paint, 62f), 42f, y, paint);
+                        canvas.drawText(fitText(name, paint, 184f), 112f, y, paint);
+                        canvas.drawText(fitText(category, paint, 96f), 304f, y, paint);
+                        canvas.drawText(fitText(amount, paint, 70f), 409f, y, paint);
+
+                        if ("Atrasado".equals(status)) paint.setColor(Color.rgb(190, 45, 55));
+                        else if ("Pago".equals(status)) paint.setColor(Color.rgb(20, 135, 78));
+                        else paint.setColor(Color.rgb(70, 85, 100));
+                        canvas.drawText(fitText(status, paint, 70f), 486f, y, paint);
+
+                        paint.setColor(Color.rgb(225, 231, 236));
+                        canvas.drawLine(36f, y + 9f, 559f, y + 9f, paint);
+                        y += 24f;
+                    }
+                }
+
+                document.finishPage(page);
+
+                String filename = "DividaEmDia-Relatorio-" + new SimpleDateFormat("yyyy-MM-dd-HHmm", Locale.US).format(new Date()) + ".pdf";
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, filename);
+                    values.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/DividaEmDia");
+                    Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                    if (uri == null) throw new IllegalStateException("Falha ao criar PDF");
+                    try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                        if (out == null) throw new IllegalStateException("Falha ao abrir PDF");
+                        document.writeTo(out);
+                    }
+                } else {
+                    File dir = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "DividaEmDia");
+                    if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("Falha ao criar pasta");
+                    try (FileOutputStream out = new FileOutputStream(new File(dir, filename))) {
+                        document.writeTo(out);
+                    }
+                }
+
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "PDF salvo em Downloads/DividaEmDia.", Toast.LENGTH_LONG).show());
+            } catch (Exception ex) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Não foi possível gerar o PDF.", Toast.LENGTH_LONG).show());
+            } finally {
+                try { document.close(); } catch (Exception ignored) {}
+            }
+        }).start();
+    }
+
     private class AppBridge {
         @JavascriptInterface
         public boolean notificationsEnabled() {
@@ -275,6 +459,11 @@ public class MainActivity extends Activity {
                 }
                 NotificationHelper.showTestNotification(MainActivity.this, mode, uri, vibration);
             });
+        }
+
+        @JavascriptInterface
+        public void exportPdf(String reportJson) {
+            exportPdfNative(reportJson);
         }
 
         @JavascriptInterface

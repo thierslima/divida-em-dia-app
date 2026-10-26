@@ -1,0 +1,9 @@
+DÍVIDA EM DIA — VERSÃO 1.5
+
+Correção principal:
+- Relatório em PDF corrigido.
+- O PDF agora é gerado nativamente pelo Android.
+- O arquivo é salvo em Downloads/DividaEmDia.
+- Inclui resumo financeiro e lista de contas.
+
+Desenvolvido por Thiers Lima

@@ -17,7 +17,7 @@ O QUE JÁ ESTÁ PRONTO
 - Categorias
 - Backup e restauração JSON
 - Exportação CSV compatível com Excel
-- Relatório para impressão/PDF
+- Relatório PDF nativo salvo em Downloads/DividaEmDia
 - Funcionamento offline
 - Dados salvos no aparelho
 - Tela "Sobre o app" com autoria de Thiers Lima
